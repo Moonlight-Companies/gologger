@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"sync"
 )
 
 const (
@@ -18,6 +19,7 @@ type Logger struct {
 	logger *log.Logger
 	level  int
 	prefix string
+	mu     sync.RWMutex
 }
 
 func NewLogger(level int, prefix string) *Logger {
@@ -28,7 +30,18 @@ func NewLogger(level int, prefix string) *Logger {
 	}
 }
 
-// Log methods with formatting
+func (l *Logger) SetPrefix(prefix string) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	l.prefix = prefix
+}
+
+func (l *Logger) GetPrefix() string {
+	l.mu.RLock()
+	defer l.mu.RUnlock()
+	return l.prefix
+}
+
 func (l *Logger) Debug(format string, v ...interface{}) {
 	if l.level <= LogLevelDebug {
 		l.log("DEBUG", format, v...)
@@ -79,7 +92,8 @@ func (l *Logger) Errorln(v ...interface{}) {
 }
 
 func (l *Logger) log(level, format string, v ...interface{}) {
-	l.logger.Printf("%s: %s %s", level, l.prefix, fmt.Sprintf(format, v...))
+	prefix := l.GetPrefix()
+	l.logger.Printf("%s: %s %s", level, prefix, fmt.Sprintf(format, v...))
 }
 
 func (l *Logger) logln(level string, v ...interface{}) {
@@ -87,5 +101,6 @@ func (l *Logger) logln(level string, v ...interface{}) {
 	for i, arg := range v {
 		args[i] = fmt.Sprint(arg)
 	}
-	l.logger.Printf("%s: %s %s", level, l.prefix, strings.Join(args, " "))
+	prefix := l.GetPrefix()
+	l.logger.Printf("%s: %s %s", level, prefix, strings.Join(args, " "))
 }

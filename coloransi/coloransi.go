@@ -72,6 +72,29 @@ func ColorChooseRandom() ColorCode {
 	return colors[rand.Intn(len(colors))]
 }
 
+func ColorFrom(item uint64) ColorCode {
+	colors := []ColorCode{
+		Red,
+		Green,
+		Yellow,
+		Blue,
+		Magenta,
+		Cyan,
+		White,
+		BrightRed,
+		BrightGreen,
+		BrightYellow,
+		BrightBlue,
+		BrightMagenta,
+		BrightCyan,
+		BrightWhite,
+	}
+
+	// Use the item value to deterministically select a color
+	index := uint64(item) % uint64(len(colors))
+	return colors[index]
+}
+
 // Color formats the given text with the specified foreground and background colors.
 func Color(fg, bg ColorCode, v ...interface{}) string {
 	fgCode := OneForeground(fg)
