@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"time"
 )
 
 const (
@@ -16,18 +17,26 @@ const (
 )
 
 type Logger struct {
-	logger *log.Logger
-	level  int
-	prefix string
-	mu     sync.RWMutex
+	logger            *log.Logger
+	level             int
+	create            time.Time
+	option_include_dt bool
+	prefix            string
+	mu                sync.RWMutex
 }
 
 func NewLogger(level int, prefix string) *Logger {
 	return &Logger{
-		logger: log.New(os.Stdout, "", log.Ldate|log.Ltime|log.Lmicroseconds),
-		level:  level,
-		prefix: prefix,
+		logger:            log.New(os.Stdout, "", log.Ldate|log.Ltime|log.Lmicroseconds),
+		level:             level,
+		prefix:            prefix,
+		create:            time.Now(),
+		option_include_dt: false,
 	}
+}
+
+func (l *Logger) SetIncludeDeltaTime(include bool) {
+	l.option_include_dt = include
 }
 
 func (l *Logger) SetPrefix(prefix string) {
@@ -92,15 +101,25 @@ func (l *Logger) Errorln(v ...interface{}) {
 }
 
 func (l *Logger) log(level, format string, v ...interface{}) {
+	text := level
+	if l.option_include_dt {
+		dt := time.Since(l.create)
+		text = fmt.Sprintf("%s %s", text, dt)
+	}
 	prefix := l.GetPrefix()
-	l.logger.Printf("%s: %s %s", level, prefix, fmt.Sprintf(format, v...))
+	l.logger.Printf("%s: %s %s", text, prefix, fmt.Sprintf(format, v...))
 }
 
 func (l *Logger) logln(level string, v ...interface{}) {
+	text := level
+	if l.option_include_dt {
+		dt := time.Since(l.create)
+		text = fmt.Sprintf("%s %s", text, dt)
+	}
 	args := make([]string, len(v))
 	for i, arg := range v {
 		args[i] = fmt.Sprint(arg)
 	}
 	prefix := l.GetPrefix()
-	l.logger.Printf("%s: %s %s", level, prefix, strings.Join(args, " "))
+	l.logger.Printf("%s: %s %s", text, prefix, strings.Join(args, " "))
 }
