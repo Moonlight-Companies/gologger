@@ -39,6 +39,20 @@ const (
 	RGBMask ColorCode = 0xFFFFFF00
 )
 
+type TextStyle uint8
+
+const (
+	Bold      TextStyle = 1
+	Dim       TextStyle = 2
+	Italic    TextStyle = 3
+	Underline TextStyle = 4
+	Blink     TextStyle = 5
+	FastBlink TextStyle = 6
+	Reverse   TextStyle = 7
+	Hidden    TextStyle = 8
+	Strike    TextStyle = 9
+)
+
 // Additional static RGB color definitions
 func CreateRGB(r, g, b uint8) ColorCode {
 	return ColorCode(uint32(r)<<24 | uint32(g)<<16 | uint32(b)<<8)
@@ -60,6 +74,31 @@ func RGB(r, g, b uint8) ColorCode {
 // IsRGB checks if the ColorCode represents an RGB color
 func (c ColorCode) IsRGB() bool {
 	return c&RGBMask != 0
+}
+
+func Style(style TextStyle, v ...interface{}) string {
+	styleCode := fmt.Sprintf("\033[%dm", style)
+	reset := Reset()
+	args := make([]string, len(v))
+	for i, arg := range v {
+		args[i] = fmt.Sprint(arg)
+	}
+	text := strings.Join(args, " ")
+	return fmt.Sprintf("%s%s%s", styleCode, text, reset)
+}
+
+// ColorAndStyle formats the text with both color and style
+func ColorAndStyle(fg ColorCode, bg ColorCode, style TextStyle, v ...interface{}) string {
+	fgCode := OneForeground(fg)
+	bgCode := OneBackground(bg)
+	styleCode := fmt.Sprintf("\033[%dm", style)
+	reset := Reset()
+	args := make([]string, len(v))
+	for i, arg := range v {
+		args[i] = fmt.Sprint(arg)
+	}
+	text := strings.Join(args, " ")
+	return fmt.Sprintf("%s%s%s%s%s", fgCode, bgCode, styleCode, text, reset)
 }
 
 // ColorChooseRandom returns a random color code (non-black, including RGB colors).

@@ -5,6 +5,132 @@ import (
 	"testing"
 )
 
+func TestTextStyles(t *testing.T) {
+	testCases := []struct {
+		name     string
+		style    TextStyle
+		expected int
+	}{
+		{"Bold", Bold, 1},
+		{"Dim", Dim, 2},
+		{"Italic", Italic, 3},
+		{"Underline", Underline, 4},
+		{"Blink", Blink, 5},
+		{"FastBlink", FastBlink, 6},
+		{"Reverse", Reverse, 7},
+		{"Hidden", Hidden, 8},
+		{"Strike", Strike, 9},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			if int(tc.style) != tc.expected {
+				t.Errorf("Expected %s to be %d, but got %d", tc.name, tc.expected, tc.style)
+			}
+		})
+	}
+}
+
+func TestStyle(t *testing.T) {
+	testCases := []struct {
+		name     string
+		style    TextStyle
+		text     string
+		expected string
+	}{
+		{
+			name:     "Bold Text",
+			style:    Bold,
+			text:     "Bold",
+			expected: "\033[1mBold\033[0m",
+		},
+		{
+			name:     "Underlined Text",
+			style:    Underline,
+			text:     "Underlined",
+			expected: "\033[4mUnderlined\033[0m",
+		},
+		{
+			name:     "Strike Through",
+			style:    Strike,
+			text:     "Strikethrough",
+			expected: "\033[9mStrikethrough\033[0m",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := Style(tc.style, tc.text)
+			if result != tc.expected {
+				t.Errorf("Expected %q, but got %q", tc.expected, result)
+			}
+		})
+	}
+}
+
+func TestColorAndStyle(t *testing.T) {
+	testCases := []struct {
+		name     string
+		fg       ColorCode
+		bg       ColorCode
+		style    TextStyle
+		text     string
+		expected string
+	}{
+		{
+			name:     "Bold Red on Black",
+			fg:       Red,
+			bg:       Black,
+			style:    Bold,
+			text:     "Test",
+			expected: "\033[31m\033[40m\033[1mTest\033[0m",
+		},
+		{
+			name:     "Underlined Green on White",
+			fg:       Green,
+			bg:       White,
+			style:    Underline,
+			text:     "Hello",
+			expected: "\033[32m\033[47m\033[4mHello\033[0m",
+		},
+		{
+			name:     "Italic RGB on Black",
+			fg:       CreateRGB(100, 150, 200),
+			bg:       Black,
+			style:    Italic,
+			text:     "RGB",
+			expected: "\033[38;2;100;150;200m\033[40m\033[3mRGB\033[0m",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := ColorAndStyle(tc.fg, tc.bg, tc.style, tc.text)
+			if result != tc.expected {
+				t.Errorf("Expected %q, but got %q", tc.expected, result)
+			}
+		})
+	}
+}
+
+func TestVisual(t *testing.T) {
+	// This test is for visual inspection and doesn't automatically check the output
+	fmt.Println("\nVisual Style Test (inspect manually):")
+	fmt.Println(Style(Bold, "Bold Text"))
+	fmt.Println(Style(Dim, "Dim Text"))
+	fmt.Println(Style(Italic, "Italic Text"))
+	fmt.Println(Style(Underline, "Underlined Text"))
+	fmt.Println(Style(Blink, "Blinking Text"))
+	fmt.Println(Style(Strike, "Strikethrough Text"))
+	fmt.Println(Style(Reverse, "Reversed Text"))
+
+	fmt.Println("\nCombined Color and Style Test:")
+	fmt.Println(ColorAndStyle(Red, Black, Bold, "Bold Red on Black"))
+	fmt.Println(ColorAndStyle(Green, White, Underline, "Underlined Green on White"))
+	fmt.Println(ColorAndStyle(Blue, Yellow, Italic, "Italic Blue on Yellow"))
+	fmt.Println(ColorAndStyle(CreateRGB(100, 150, 200), Black, Bold, "Bold RGB on Black"))
+}
+
 func TestColorCodes(t *testing.T) {
 	testCases := []struct {
 		name     string
