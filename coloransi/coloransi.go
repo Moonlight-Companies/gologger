@@ -10,6 +10,74 @@ import (
 // The lower 8 bits represent ANSI color codes, and the upper 24 bits represent RGB values.
 type ColorCode uint32
 
+func (c ColorCode) CalculateLuminance() float64 {
+	r, g, b := c.GetRGB()
+
+	// Using relative luminance formula (perceived brightness)
+	// See: https://www.w3.org/TR/WCAG20/#relativeluminancedef
+	rr := float64(r) / 255.0
+	gg := float64(g) / 255.0
+	bb := float64(b) / 255.0
+
+	return 0.2126*rr + 0.7152*gg + 0.0722*bb
+}
+
+// Appoximate RGB values for ANSI colors
+func (c ColorCode) GetRGB() (uint8, uint8, uint8) {
+	if c.IsRGB() {
+		return uint8((c >> 24) & 0xFF),
+			uint8((c >> 16) & 0xFF),
+			uint8((c >> 8) & 0xFF)
+	}
+
+	// Convert ANSI colors to approximate RGB values
+	// note these are approximate because a user can configure their terminal colors
+	switch c {
+	case Black:
+		return 0, 0, 0
+	case Red:
+		return 170, 0, 0
+	case Green:
+		return 0, 170, 0
+	case Yellow:
+		return 170, 170, 0
+	case Blue:
+		return 0, 0, 170
+	case Magenta:
+		return 170, 0, 170
+	case Cyan:
+		return 0, 170, 170
+	case White:
+		return 170, 170, 170
+	case BrightBlack:
+		return 85, 85, 85
+	case BrightRed:
+		return 255, 85, 85
+	case BrightGreen:
+		return 85, 255, 85
+	case BrightYellow:
+		return 255, 255, 85
+	case BrightBlue:
+		return 85, 85, 255
+	case BrightMagenta:
+		return 255, 85, 255
+	case BrightCyan:
+		return 85, 255, 255
+	case BrightWhite:
+		return 255, 255, 255
+	default:
+		return 170, 170, 170 // Default to gray if unknown
+	}
+}
+
+func (c ColorCode) GetContrast() ColorCode {
+	luminance := c.CalculateLuminance()
+	if luminance > 0.5 {
+		return Black
+	}
+	return ColorWhite
+}
+
 // ANSI color codes
 const (
 	Black   ColorCode = 30
@@ -65,6 +133,7 @@ var ColorPurple ColorCode = CreateRGB(128, 0, 128)
 var ColorTeal ColorCode = CreateRGB(0, 128, 128)
 var ColorLimeGreen ColorCode = CreateRGB(50, 205, 50)
 var ColorIndigo ColorCode = CreateRGB(75, 0, 130)
+var ColorWhite ColorCode = CreateRGB(255, 255, 255)
 
 // RGB creates a ColorCode from RGB values
 func RGB(r, g, b uint8) ColorCode {
@@ -76,28 +145,45 @@ func (c ColorCode) IsRGB() bool {
 	return c&RGBMask != 0
 }
 
+// Style formats the text with the specified text style, legacy
 func Style(style TextStyle, v ...interface{}) string {
-	styleCode := fmt.Sprintf("\033[%dm", style)
+	return Styles([]TextStyle{style}, v...)
+}
+
+// Styles formats the text with the specified text styles
+func Styles(styles []TextStyle, v ...interface{}) string {
+	styleCodes := make([]string, len(styles))
+	for i, style := range styles {
+		styleCodes[i] = fmt.Sprintf("\033[%dm", style)
+	}
+	combinedStyles := strings.Join(styleCodes, "")
 	reset := Reset()
 	args := make([]string, len(v))
 	for i, arg := range v {
 		args[i] = fmt.Sprint(arg)
 	}
 	text := strings.Join(args, " ")
-	return fmt.Sprintf("%s%s%s", styleCode, text, reset)
+	return fmt.Sprintf("%s%s%s", combinedStyles, text, reset)
 }
 
 // ColorAndStyle formats the text with both color and style
 func ColorAndStyle(fg ColorCode, bg ColorCode, style TextStyle, v ...interface{}) string {
 	fgCode := OneForeground(fg)
 	bgCode := OneBackground(bg)
-	styleCode := fmt.Sprintf("\033[%dm", style)
+
+	styleCode := ""
+	if style != 0 {
+		styleCode = fmt.Sprintf("\033[%dm", style)
+	}
+
 	reset := Reset()
+
 	args := make([]string, len(v))
 	for i, arg := range v {
 		args[i] = fmt.Sprint(arg)
 	}
 	text := strings.Join(args, " ")
+
 	return fmt.Sprintf("%s%s%s%s%s", fgCode, bgCode, styleCode, text, reset)
 }
 
@@ -111,6 +197,8 @@ func ColorChooseRandom() ColorCode {
 	return colors[rand.Intn(len(colors))]
 }
 
+// ColorFrom returns a color code based on the given item value.
+// Very useful for "cookie" unique identifiers such that related messages are always the same color.
 func ColorFrom(item uint64) ColorCode {
 	colors := []ColorCode{
 		Red,
@@ -147,6 +235,7 @@ func Color(fg, bg ColorCode, v ...interface{}) string {
 	return fmt.Sprintf("%s%s%s%s", fgCode, bgCode, text, reset)
 }
 
+// Foreground formats the given text with the specified foreground color.
 func Foreground(fg ColorCode, v ...interface{}) string {
 	fgCode := OneForeground(fg)
 	reset := Reset()
@@ -167,6 +256,18 @@ func OneForeground(code ColorCode) string {
 		return fmt.Sprintf("\033[38;2;%d;%d;%dm", r, g, b)
 	}
 	return fmt.Sprintf("\033[%dm", code)
+}
+
+// Background formats the given text with the specified background color.
+func Background(code ColorCode, v ...interface{}) string {
+	bgCode := OneBackground(code)
+	reset := Reset()
+	args := make([]string, len(v))
+	for i, arg := range v {
+		args[i] = fmt.Sprint(arg)
+	}
+	text := strings.Join(args, " ")
+	return fmt.Sprintf("%s%s%s", bgCode, text, reset)
 }
 
 // OneBackground returns the ANSI escape sequence for the given background color code.
