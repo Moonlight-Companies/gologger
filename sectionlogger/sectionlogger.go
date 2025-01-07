@@ -77,7 +77,7 @@ type SectionLogger struct {
 	prefix      string
 	entries     []logEntry
 	startTime   time.Time
-	lastTime    *time.Time
+	lastTime    time.Time
 	width       int
 	borderFg    ColorCode
 	borderBg    ColorCode
@@ -94,7 +94,7 @@ func New(prefix string) *SectionLogger {
 		prefix:      prefix,
 		entries:     make([]logEntry, 0),
 		startTime:   now,
-		lastTime:    nil,
+		lastTime:    now,
 		width:       80,
 		borderFg:    Black,
 		borderBg:    BrightGreen,
@@ -110,10 +110,7 @@ func (l *SectionLogger) TimeSinceLast() time.Duration {
 	l.mu.RLock()
 	defer l.mu.RUnlock()
 
-	if l.lastTime == nil {
-		return 0
-	}
-	return time.Since(*l.lastTime)
+	return time.Since(l.lastTime)
 }
 
 func (l *SectionLogger) SetWidth(width int) {
@@ -140,6 +137,7 @@ func (l *SectionLogger) Add(section, label, value string) {
 
 	l.mu.Lock()
 	l.entries = append(l.entries, entry)
+	l.lastTime = time.Now()
 	complete := l.complete
 	l.mu.Unlock()
 
@@ -189,10 +187,10 @@ func (l *SectionLogger) Event(section, value string) {
 		value:     value,
 		timestamp: now,
 		startTime: l.startTime,
-		prevTime:  l.lastTime,
+		prevTime:  &l.lastTime,
 	}
 	l.entries = append(l.entries, entry)
-	l.lastTime = &now
+	l.lastTime = now
 	complete := l.complete
 	l.mu.Unlock()
 
