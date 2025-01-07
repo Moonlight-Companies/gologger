@@ -106,6 +106,16 @@ func New(prefix string) *SectionLogger {
 	}
 }
 
+func (l *SectionLogger) TimeSinceLast() time.Duration {
+	l.mu.RLock()
+	defer l.mu.RUnlock()
+
+	if l.lastTime == nil {
+		return 0
+	}
+	return time.Since(*l.lastTime)
+}
+
 func (l *SectionLogger) SetWidth(width int) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
