@@ -109,8 +109,6 @@ func (l *SectionLogger) TimeSinceLast() time.Duration {
 }
 
 func (l *SectionLogger) SetWidth(width int) {
-	l.mu.Lock()
-	defer l.mu.Unlock()
 	l.width = width
 }
 
@@ -139,25 +137,6 @@ func (l *SectionLogger) Add(section, label, value string) {
 	l.mu.Unlock()
 
 	if complete {
-		l.mu.RLock()
-		// For late messages, print a mini-section if it's the first late message for this section
-		isNewSection := true
-		for i := len(l.entries) - 2; i >= 0; i-- {
-			if l.entries[i].Section() == section {
-				isNewSection = false
-				break
-			}
-		}
-		l.mu.RUnlock()
-
-		if isNewSection {
-			// Print a continuation header for the new section
-			fmt.Printf("%s %s\n",
-				ColorAndStyle(l.prefixFg, l.prefixBg, l.prefixStyle, l.prefix),
-				l.createBorderLine("┣", section))
-		}
-
-		// Print the entry directly
 		fmt.Println(l.renderEntry(entry, l.calculateMaxWidth()))
 	}
 }
@@ -194,24 +173,6 @@ func (l *SectionLogger) Event(section, value string) {
 	l.mu.Unlock()
 
 	if complete {
-		l.mu.RLock()
-		// For late messages, print a mini-section if it's the first late message for this section
-		isNewSection := true
-		for i := len(l.entries) - 2; i >= 0; i-- {
-			if l.entries[i].Section() == section {
-				isNewSection = false
-				break
-			}
-		}
-		l.mu.RUnlock()
-
-		if isNewSection {
-			// Print a continuation header for the new section
-			fmt.Printf("%s %s\n",
-				ColorAndStyle(l.prefixFg, l.prefixBg, l.prefixStyle, l.prefix),
-				l.createBorderLine("┣", section))
-		}
-
 		// Print the entry directly
 		fmt.Println(l.renderEntry(entry, l.calculateMaxWidth()))
 	}
@@ -243,12 +204,10 @@ func (l *SectionLogger) calculateMaxWidth() int {
 }
 
 func (l *SectionLogger) createBorderLine(leftChar string, text string) string {
-	l.mu.RLock()
 	width := l.width
 	borderFg := l.borderFg
 	borderBg := l.borderBg
 	borderStyle := l.borderStyle
-	l.mu.RUnlock()
 
 	parts := []string{
 		ColorAndStyle(borderFg, borderBg, borderStyle, leftChar),
