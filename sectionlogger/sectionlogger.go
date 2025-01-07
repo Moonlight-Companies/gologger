@@ -47,7 +47,7 @@ type eventEntry struct {
 	value     string
 	timestamp time.Time
 	startTime time.Time
-	prevTime  *time.Time
+	prevTime  time.Time
 }
 
 func (e *eventEntry) Width() int {
@@ -55,15 +55,13 @@ func (e *eventEntry) Width() int {
 }
 
 func (e *eventEntry) Section() string {
-	return e.section
+	return strings.ToUpper(e.section)
 }
 
 func (e *eventEntry) RenderLabel() string {
 	sinceStart := e.timestamp.Sub(e.startTime).Milliseconds()
-	var sincePrev int64
-	if e.prevTime != nil {
-		sincePrev = e.timestamp.Sub(*e.prevTime).Milliseconds()
-	}
+	sincePrev := e.timestamp.Sub(e.prevTime).Milliseconds()
+
 	return fmt.Sprintf("%-6d %-6d", sinceStart, sincePrev)
 }
 
@@ -107,9 +105,6 @@ func New(prefix string) *SectionLogger {
 }
 
 func (l *SectionLogger) TimeSinceLast() time.Duration {
-	l.mu.RLock()
-	defer l.mu.RUnlock()
-
 	return time.Since(l.lastTime)
 }
 
@@ -129,6 +124,8 @@ func (l *SectionLogger) renderEntry(entry logEntry, maxKeyWidth int) string {
 }
 
 func (l *SectionLogger) Add(section, label, value string) {
+	section = strings.ToUpper(section)
+
 	entry := &labelEntry{
 		section: section,
 		label:   label,
@@ -169,6 +166,8 @@ func (l *SectionLogger) Clear(section string) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
+	section = strings.ToUpper(section)
+
 	var newEntries []logEntry
 	for _, entry := range l.entries {
 		if entry.Section() != section {
@@ -187,7 +186,7 @@ func (l *SectionLogger) Event(section, value string) {
 		value:     value,
 		timestamp: now,
 		startTime: l.startTime,
-		prevTime:  &l.lastTime,
+		prevTime:  l.lastTime,
 	}
 	l.entries = append(l.entries, entry)
 	l.lastTime = now
@@ -219,16 +218,12 @@ func (l *SectionLogger) Event(section, value string) {
 }
 
 func (l *SectionLogger) SetBorderColor(fg, bg ColorCode, style TextStyle) {
-	l.mu.Lock()
-	defer l.mu.Unlock()
 	l.borderFg = fg
 	l.borderBg = bg
 	l.borderStyle = style
 }
 
 func (l *SectionLogger) SetPrefixColor(fg, bg ColorCode, style TextStyle) {
-	l.mu.Lock()
-	defer l.mu.Unlock()
 	l.prefixFg = fg
 	l.prefixBg = bg
 	l.prefixStyle = style
