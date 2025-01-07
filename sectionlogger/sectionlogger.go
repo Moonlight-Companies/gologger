@@ -121,8 +121,15 @@ func (l *SectionLogger) renderEntry(entry logEntry, maxKeyWidth int) string {
 		entry.RenderValue())
 }
 
-func (l *SectionLogger) Add(section, label, value string) {
+func (l *SectionLogger) Add(section, label string, values ...interface{}) {
 	section = strings.ToUpper(section)
+
+	// Convert all values to strings and join with spaces
+	strValues := make([]string, len(values))
+	for i, v := range values {
+		strValues[i] = fmt.Sprint(v)
+	}
+	value := strings.Join(strValues, " ")
 
 	entry := &labelEntry{
 		section: section,
@@ -156,8 +163,15 @@ func (l *SectionLogger) Clear(section string) {
 	l.entries = newEntries
 }
 
-func (l *SectionLogger) Event(section, value string) {
+func (l *SectionLogger) Event(section string, values ...interface{}) {
 	now := time.Now()
+
+	// Convert all values to strings and join with spaces
+	strValues := make([]string, len(values))
+	for i, v := range values {
+		strValues[i] = fmt.Sprint(v)
+	}
+	value := strings.Join(strValues, " ")
 
 	l.mu.Lock()
 	entry := &eventEntry{
@@ -173,7 +187,6 @@ func (l *SectionLogger) Event(section, value string) {
 	l.mu.Unlock()
 
 	if complete {
-		// Print the entry directly
 		fmt.Println(l.renderEntry(entry, l.calculateMaxWidth()))
 	}
 }
