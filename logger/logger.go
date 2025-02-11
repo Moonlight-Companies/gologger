@@ -9,8 +9,25 @@ import (
 	"time"
 )
 
+type LogLevel int
+
+func (l LogLevel) String() string {
+	switch l {
+	case LogLevelDebug:
+		return "DEBUG"
+	case LogLevelInfo:
+		return "INFO"
+	case LogLevelWarn:
+		return "WARN"
+	case LogLevelError:
+		return "ERROR"
+	default:
+		return "UNKNOWN"
+	}
+}
+
 const (
-	LogLevelDebug = iota
+	LogLevelDebug = LogLevel(iota)
 	LogLevelInfo
 	LogLevelWarn
 	LogLevelError
@@ -18,14 +35,14 @@ const (
 
 type Logger struct {
 	logger            *log.Logger
-	level             int
+	level             LogLevel
 	create            time.Time
 	option_include_dt bool
 	prefix            string
 	mu                sync.RWMutex
 }
 
-func NewLogger(level int, prefix string) *Logger {
+func NewLogger(level LogLevel, prefix string) *Logger {
 	return &Logger{
 		logger:            log.New(os.Stdout, "", log.Ldate|log.Ltime|log.Lmicroseconds),
 		level:             level,
@@ -49,6 +66,10 @@ func (l *Logger) GetPrefix() string {
 	l.mu.RLock()
 	defer l.mu.RUnlock()
 	return l.prefix
+}
+
+func (l *Logger) SetLevel(level LogLevel) {
+	l.level = level
 }
 
 func (l *Logger) Debug(format string, v ...interface{}) {
