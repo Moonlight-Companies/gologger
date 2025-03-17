@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"reflect"
 	"strings"
 	"sync"
 	"time"
@@ -140,9 +141,23 @@ func (l *Logger) logln(level string, v ...interface{}) {
 	args := make([]string, len(v))
 	for i, arg := range v {
 		if arg == nil {
+			// handle nil values
 			args[i] = fmt.Sprintf("<nil arg %d>", i)
 			continue
 		}
+
+		val := reflect.ValueOf(arg)
+		if val.Kind() == reflect.Ptr && val.IsNil() {
+			// handle typed nil pointers
+			args[i] = fmt.Sprintf("<nil %s pointer at arg %d>", val.Type().Elem(), i)
+			continue
+		}
+
+		if val.Kind() == reflect.Slice && val.IsNil() {
+			args[i] = fmt.Sprintf("<nil %s slice at arg %d>", val.Type().Elem(), i)
+			continue
+		}
+
 		args[i] = fmt.Sprint(arg)
 	}
 	prefix := l.GetPrefix()
