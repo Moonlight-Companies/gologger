@@ -139,6 +139,10 @@ func (l *Logger) logln(level string, v ...interface{}) {
 	}
 	args := make([]string, len(v))
 	for i, arg := range v {
+		if arg == nil {
+			args[i] = fmt.Sprintf("<nil arg %d>", i)
+			continue
+		}
 		args[i] = fmt.Sprint(arg)
 	}
 	prefix := l.GetPrefix()
