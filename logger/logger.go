@@ -242,7 +242,7 @@ func (l *Logger) getLogPrefix(levelStr string) string {
 	return fmt.Sprintf("%s: %s", levelStr, l.prefix)
 }
 
-func formatArgIntoString(arg interface{}) (s string) {
+func FormatArgIntoString(arg interface{}) (s string) {
 	defer func() {
 		if r := recover(); r != nil {
 			s = fmt.Sprintf("<error printing arg: %v>", r)
@@ -267,7 +267,7 @@ func (l *Logger) formatArgs(v ...interface{}) string {
 			continue
 		}
 
-		args[i] = formatArgIntoString(arg)
+		args[i] = FormatArgIntoString(arg)
 	}
 
 	return strings.Join(args, " ")

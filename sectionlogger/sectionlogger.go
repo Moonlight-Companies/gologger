@@ -8,6 +8,7 @@ import (
 
 	"github.com/Moonlight-Companies/gologger/coloransi"
 	. "github.com/Moonlight-Companies/gologger/coloransi"
+	"github.com/Moonlight-Companies/gologger/logger"
 )
 
 // logEntry defines the interface for different types of log entries
@@ -108,6 +109,12 @@ func (l *SectionLogger) TimeSinceLast() time.Duration {
 	return time.Since(l.lastTime)
 }
 
+func (l *SectionLogger) SetPrefix(prefix string) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	l.prefix = prefix
+}
+
 func (l *SectionLogger) SetWidth(width int) {
 	l.width = width
 }
@@ -127,7 +134,7 @@ func (l *SectionLogger) Add(section, label string, values ...interface{}) {
 	// Convert all values to strings and join with spaces
 	strValues := make([]string, len(values))
 	for i, v := range values {
-		strValues[i] = fmt.Sprint(v)
+		strValues[i] = logger.FormatArgIntoString(v)
 	}
 	value := strings.Join(strValues, " ")
 
@@ -169,7 +176,7 @@ func (l *SectionLogger) Event(section string, values ...interface{}) {
 	// Convert all values to strings and join with spaces
 	strValues := make([]string, len(values))
 	for i, v := range values {
-		strValues[i] = fmt.Sprint(v)
+		strValues[i] = logger.FormatArgIntoString(v)
 	}
 	value := strings.Join(strValues, " ")
 
@@ -197,9 +204,33 @@ func (l *SectionLogger) SetBorderColor(fg, bg ColorCode, style TextStyle) {
 	l.borderStyle = style
 }
 
+func (l *SectionLogger) SetBorderColorFG(fg ColorCode) {
+	l.borderFg = fg
+}
+
+func (l *SectionLogger) SetBorderColorBG(bg ColorCode) {
+	l.borderBg = bg
+}
+
+func (l *SectionLogger) SetBorderColorStyle(style TextStyle) {
+	l.borderStyle = style
+}
+
 func (l *SectionLogger) SetPrefixColor(fg, bg ColorCode, style TextStyle) {
 	l.prefixFg = fg
 	l.prefixBg = bg
+	l.prefixStyle = style
+}
+
+func (l *SectionLogger) SetPrefixColorFG(fg ColorCode) {
+	l.prefixFg = fg
+}
+
+func (l *SectionLogger) SetPrefixColorBG(bg ColorCode) {
+	l.prefixBg = bg
+}
+
+func (l *SectionLogger) SetPrefixColorStyle(style TextStyle) {
 	l.prefixStyle = style
 }
 
