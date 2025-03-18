@@ -192,6 +192,17 @@ func (l *Logger) Errorln(v ...interface{}) {
 	}
 }
 
+// SimplePrintLines prints each line guarded by a mutex to the writer
+// This is useful for printing multiple lines without interleaving log messages
+func (l *Logger) SimplePrintLines(lines []string) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	for _, line := range lines {
+		fmt.Fprintln(l.writer, line)
+	}
+}
+
 // log handles formatted logging
 func (l *Logger) log(level LogLevel, format string, v ...interface{}) {
 	levelStr := level.String()
