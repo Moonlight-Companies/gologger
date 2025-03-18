@@ -81,7 +81,7 @@ func WithZeroTime() LoggerOption {
 func NewLogger(prefix string, options ...LoggerOption) *Logger {
 	l := &Logger{
 		writer:     os.Stdout,
-		level:      LogLevelInfo, // Default level
+		level:      LogLevelDebug, // Default level
 		prefix:     prefix,
 		createTime: time.Now(),
 	}
