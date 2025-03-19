@@ -42,7 +42,7 @@ func (m *Monitor) run() {
 		case <-ticker.C:
 			var memStats runtime.MemStats
 			runtime.ReadMemStats(&memStats)
-			logger.Log.Info("stats Goroutines: %d, Allocated Memory: %s, Total Alloc: %s, Sys Memory: %s, Num GC: %d\n",
+			logger.Log.Info("stats Goroutines: %d, Allocated Memory: %s, Total Alloc: %s, Sys Memory: %s, Num GC: %d",
 				runtime.NumGoroutine(),
 				formatBytes(memStats.Alloc),
 				formatBytes(memStats.TotalAlloc),
